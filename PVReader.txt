@@ -1,0 +1,4 @@
+run("Prairie Reader");
+name = getArgument;
+call("Prairie_Reader.SetFile", name);
+
