@@ -34,3 +34,16 @@ To set up and use the **After Scan Complete/Playback** action:
 7. In playback mode it is now possible to select the **Open in ImageJ** action from the **Actions** dropdown on the **Playback Controls** dialog and press the **Perform** button to the right to open the data set in ImageJ
 8. (Optional) On the **Misc** tab of the main control window the **Open in ImageJ** script can be selected for the **After Scan** dropdown in the **Actions to Perform** section to automatically open a data set in ImageJ after it is acquired. To stop opening datasets in playback mode deselect **Automatically Start Playback After Acquisition** from the **Preferences** menu
 9. (Advanced/Optional) Following steps 1-3 again (using a different name) select the **Rule** option instead of **Action**, and select one or more **Scan Types** to run the **Open in ImageJ** action already created, to only open specific types of data sets in ImageJ when selected in step 8
+
+## Making Changes/Recompiling Prairie Reader Plugin
+This is a legacy plugin that has been compiled using just ImageJ 1.49, as a result the compilation process isn't very straightforward:
+1. For some reason, perhaps an ImageJ bug that has since been fixed, attempting to compile plugin code for a plugin which is already installed doesn't work, so the Prairie_Reader.jar file must be removed from the plugins folder (or file extension changed to .ignore ore something ImageJ won't try and load) prior to compilation.
+2. To make file management easier Prairie_Reader.java should be in it's own folder.  This is where ImageJ will stick all the .class files and they are easier to compress into a .zip/.jar file if there aren't other files in the same folder.
+3. Run ImageJ and from the menu select **Plugins** -> **Macros** -> **Edit...**
+4. Select Prairie_Reader.java from wherever the source file is located and click open.
+5. It is possible to make changes to the source file and save them if that hasn't been done already.
+6. From the editor dialog menu select **File** -> **Compile and Run**
+7. There will be an error message that the Prairie_Reader class could not be found, but the .class files will have been compiled if there were no syntax issues.  There is no indication of compiler errors aside from no .class files being generated.
+8. Select all files in the folder and add then to a .zip file. It's ok to include the .jaja file as well, and encouraged so it is available as a reference.
+9. Rename the zip file to **Prairie_Reader.jar**
+10. Move or copy the newly created  **Prairie_Reader.jar** file to the ImageJ plugins folder and restart ImageJ to use it.
