@@ -355,7 +355,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
 	static Prairie_DataSet data;
 	static Prairie_Sequence currentSequence;
 	static Prairie_Frame currentFrame;
-        String PrairieReaderVersion = "v5.6";
+        String PrairieReaderVersion = "v5.8";
         
         CheckboxMenuItem optionsMenuItemImageStitchingProcessOverlapCopy;
         CheckboxMenuItem optionsMenuItemImageStitchingProcessOverlapBrightest;
@@ -407,18 +407,6 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                 prairieMenuOptions.add(optionsMenuItemImageStitching);
                 prairieMenuBar.add(prairieMenuOptions);
                 
-//                Menu prairieMenuProcess = new Menu("Process");
-//                MenuItem processMenuItemRatio = new MenuItem("MergeViaScript");
-//                processMenuItemRatio.addActionListener(this);
-//                processMenuItemRatio.setActionCommand("ProcessMergeViaScript");
-//                prairieMenuProcess.add(processMenuItemRatio);
-//                //prairieMenuBar.add(prairieMenuProcess);
-//                
-//                MenuItem processMenuMergeTIFF = new MenuItem("MergeViaCode");
-//                processMenuMergeTIFF.addActionListener(this);
-//                processMenuMergeTIFF.setActionCommand("ProcessMergeViaCode");
-//                prairieMenuProcess.add(processMenuMergeTIFF);
-//                prairieMenuBar.add(prairieMenuProcess);
                 
                 Menu prairieMenuHelp = new Menu("Help");
                 MenuItem helpMenuItemRevisionHistory = new MenuItem("Revision History");
@@ -685,69 +673,6 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
 //                RTFView revHistory = new RTFView(this, "Revision History", false);
 //                revHistory.setVisible(true);
             }
-            else if(e.getActionCommand().equals("ProcessMergeViaScript")) {
-                ij.plugin.Macro_Runner test2 = new ij.plugin.Macro_Runner();
-                test2.run("Todd-CombineLinescanImages.ijm");
-            }
-            else if(e.getActionCommand().equals("ProcessMergeViaCode")) {
-                File file1 = new File("C:\\Test2", "LineScan-08012012-1517-1790_Cycle00001_CurrentSettings_Ch1_000001.tif");
-                File file2 = new File("C:\\Test2", "LineScan-08012012-1517-1790_Cycle00001_CurrentSettings_Ch1_000002.tif");
-                File file3 = new File("C:\\Test2", "LineScan-08012012-1517-1790_Cycle00001_CurrentSettings_Ch1_000003.tif");
-                File file4 = new File("C:\\Test2", "LineScan-08012012-1517-1790_Cycle00001_CurrentSettings_Ch1_000004.tif");
-//                try {
-                   ImagePlus ip1 = new ImagePlus();
-                   ImagePlus ip2 = new ImagePlus();
-                   ImagePlus ip3 = new ImagePlus();
-                   ImagePlus ip4 = new ImagePlus();
-                   ip1 = IJ.openImage("C:\\Test2\\LineScan-08012012-1517-1790_Cycle00001_CurrentSettings_Ch1_000001.tif");
-                   ip2 = IJ.openImage("C:\\Test2\\LineScan-08012012-1517-1790_Cycle00001_CurrentSettings_Ch1_000002.tif");
-                   ip3 = IJ.openImage("C:\\Test2\\LineScan-08012012-1517-1790_Cycle00001_CurrentSettings_Ch1_000003.tif");
-                   ip4 = IJ.openImage("C:\\Test2\\LineScan-08012012-1517-1790_Cycle00001_CurrentSettings_Ch1_000004.tif");
-                   //IJ.showMessage("1: " + ip1.getWidth() + ", " + ip1.getHeight() + "  2: " + ip2.getWidth() + ", " + ip2.getHeight() + "  3: " + ip3.getWidth() + ", " + ip3.getHeight() + "  4: " + ip4.getWidth() + ", " + ip4.getHeight());
-                   //ip4.getProcessor().
-                   ImagePlus ipOut = IJ.createImage("compImage", "16-bit Black", ip1.getWidth(), ip1.getHeight()+ip2.getHeight()+ip3.getHeight()+ip4.getHeight(), 1);
-                   //ImageProcessor ipOutProcessor = ipOut.getProcessor();
-                   int sourcePixelRow[] = new int[ip1.getWidth()];
-                   for (int intI = 0; intI < ip1.getHeight(); intI++) {
-                       ip1.getProcessor().getRow(0, intI, sourcePixelRow, ip1.getWidth());
-                       ipOut.getProcessor().putRow(0, intI, sourcePixelRow, ip1.getWidth());
-                   }
-                   for (int intI = 0; intI < ip2.getHeight(); intI++) {
-                       ip2.getProcessor().getRow(0, intI, sourcePixelRow, ip2.getWidth());
-                       ipOut.getProcessor().putRow(0, 1000 + intI, sourcePixelRow, ip2.getWidth());
-                   }
-                   for (int intI = 0; intI < ip3.getHeight(); intI++) {
-                       ip3.getProcessor().getRow(0, intI, sourcePixelRow, ip3.getWidth());
-                       ipOut.getProcessor().putRow(0, 2000 + intI, sourcePixelRow, ip3.getWidth());
-                   }
-                   for (int intI = 0; intI < ip4.getHeight(); intI++) {
-                       ip4.getProcessor().getRow(0, intI, sourcePixelRow, ip4.getWidth());
-                       ipOut.getProcessor().putRow(0, 3000 + intI, sourcePixelRow, ip4.getWidth());
-                   }
-                   ipOut.show();
-                   IJ.save(ipOut, "C:\\Test2\\temp1.tif");
-                   
-//                   File outputFile = new File("C:\\Test2\\compositeImage.tif");
-//                   ImageIO.write(image1, "tiff", outputFile);
-//                }
-//                catch (IOException pmvce) {
-//                    IJ.showMessage("TIFF merge Error: " + pmvce.getMessage());
-//                }
-             }
-            else if(e.getActionCommand().equals("ProcessRatio")) {
-                // Make sure that there are at least two channels associated with
-                // the current data set.
-                if (currentSequence == null) {
-                    IJ.showMessage("Ratio Feature Unavailable" ,"No data set is currently loaded.");
-                }
-                else if (currentSequence.ChannelCount() < 2){
-                    IJ.showMessage("Ratio Feature Unavailable" ,"The current data set does not include two or more channels of data.");
-                }
-                else {
-                    //IJ.showMessage("Ratio Feature available" ,"The current data set has " + currentSequence.ChannelCount() + " channels.");
-                    IJ.doCommand("Ratio Plus");
-                }
-            }
 	}
 
         public void itemStateChanged(ItemEvent e) {
@@ -804,6 +729,10 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                 jTextPaneRevisionHistory.setText("BRUKER NANO FM\n" +
                                                 "PRAIRIE_READER REVISION HISTORY\n" +
                                                 "\n" +
+                                                "\n" +
+                                                "Version 5.8\n" +
+                                                "\n" +
+                                                "Added support for reading Multipage TIFF files. #1004\n" +
                                                 "\n" +
                                                 "Version 5.6\n" +
                                                 "\n" +
@@ -8813,6 +8742,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                     for (int frameIndex = 0; frameIndex < frameCount; frameIndex++) {
                                             for (int channel = 0; channel < 4; channel++) {
                                                     String filename = data.Sequences.elementAt(sequenceIndex).Frames.elementAt(frameIndex).Filename[channel];
+                                                    int page = data.Sequences.elementAt(sequenceIndex).Frames.elementAt(frameIndex).PageNumber[channel]; 
                                                     if (filename != null) {
                                                             ImagePlus imp = new ImagePlus(data.Directory + filename);
                                                             if (imp.getStatistics().max > maxIntensity) maxIntensity = imp.getStatistics().max;
@@ -8843,27 +8773,27 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                                             if (imp != null) {
                                                                     if (stack == null) stack = new ImageStack(imp.getWidth(), imp.getHeight(), imp.getProcessor().getColorModel());
                                                                     ImageStack inputStack = imp.getStack();
-                                                                    stack.addSlice(currentSequence.Frames.elementAt(frameIndex).Summary(), inputStack.getProcessor(1));
+                                                                    stack.addSlice(currentSequence.Frames.elementAt(frameIndex).Summary(), inputStack.getProcessor(page)); //*VU 11/30/22 #1004 getProcessor(1)->getProcessor(page)
                                                             }
                                                             if ((imp1 != null) && (channel == 0)) {
                                                                     if (stack1 == null) stack1 = new ImageStack(imp1.getWidth(), imp1.getHeight(), imp1.getProcessor().getColorModel());
                                                                     ImageStack inputStack = imp1.getStack();
-                                                                    stack1.addSlice(currentSequence.Frames.elementAt(frameIndex).Summary(), inputStack.getProcessor(1));
+                                                                    stack1.addSlice(currentSequence.Frames.elementAt(frameIndex).Summary(), inputStack.getProcessor(page)); //*VU 11/30/22 #1004 getProcessor(1)->getProcessor(page)
                                                             }
                                                             if ((imp2 != null) && (channel == 1)) {
                                                                     if (stack2 == null) stack2 = new ImageStack(imp2.getWidth(), imp2.getHeight(), imp2.getProcessor().getColorModel());
                                                                     ImageStack inputStack = imp2.getStack();
-                                                                    stack2.addSlice(currentSequence.Frames.elementAt(frameIndex).Summary(), inputStack.getProcessor(1));
+                                                                    stack2.addSlice(currentSequence.Frames.elementAt(frameIndex).Summary(), inputStack.getProcessor(page)); //*VU 11/30/22 #1004 getProcessor(1)->getProcessor(page)
                                                             }
                                                             if ((imp3 != null) && (channel == 2)) {
                                                                     if (stack3 == null) stack3 = new ImageStack(imp3.getWidth(), imp3.getHeight(), imp3.getProcessor().getColorModel());
                                                                     ImageStack inputStack = imp3.getStack();
-                                                                    stack3.addSlice(currentSequence.Frames.elementAt(frameIndex).Summary(), inputStack.getProcessor(1));
+                                                                    stack3.addSlice(currentSequence.Frames.elementAt(frameIndex).Summary(), inputStack.getProcessor(page)); //*VU 11/30/22 #1004 getProcessor(1)->getProcessor(page)
                                                             }
                                                             if ((imp4 != null) && (channel == 3)) {
                                                                     if (stack4 == null) stack4 = new ImageStack(imp4.getWidth(), imp4.getHeight(), imp4.getProcessor().getColorModel());
                                                                     ImageStack inputStack = imp4.getStack();
-                                                                    stack4.addSlice(currentSequence.Frames.elementAt(frameIndex).Summary(), inputStack.getProcessor(1));
+                                                                    stack4.addSlice(currentSequence.Frames.elementAt(frameIndex).Summary(), inputStack.getProcessor(page)); //*VU 11/30/22 #1004 getProcessor(1)->getProcessor(page)
                                                             }
                                                     }	
                                             }
@@ -8873,6 +8803,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                             for (int frameIndex = 0; frameIndex < frameCount; frameIndex++) {
                                     for (int channel = 0; channel < 4; channel++) {
                                             String filename = currentSequence.Frames.elementAt(frameIndex).Filename[channel];
+                                            int page = currentSequence.Frames.elementAt(frameIndex).PageNumber[channel]; //*VU 11/30/22 #1004
                                             if (filename != null) {
                                                     ImagePlus imp = null;
                                                     try {
@@ -8899,7 +8830,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                                             else {
                                                                 inputStack = imp.getStack();
                                                             }
-                                                            stack.addSlice(currentSequence.Frames.elementAt(frameIndex).Summary(), inputStack.getProcessor(1));
+                                                            stack.addSlice(currentSequence.Frames.elementAt(frameIndex).Summary(), inputStack.getProcessor(page)); //*VU 11/30/22 #1004 getProcessor(1)->getProcessor(page)
                                                     }
                                                     imp1 = null;
                                                     try {
@@ -8926,7 +8857,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                                             else {
                                                                 inputStack = imp1.getStack();
                                                             }
-                                                            stack1.addSlice(currentSequence.Frames.elementAt(frameIndex).Summary(), inputStack.getProcessor(1));
+                                                            stack1.addSlice(currentSequence.Frames.elementAt(frameIndex).Summary(), inputStack.getProcessor(page)); //*VU 11/30/22 #1004 getProcessor(1)->getProcessor(page)
                                                     }
                                                     imp2 = null;
                                                     try {
@@ -8953,7 +8884,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                                             else {
                                                                 inputStack = imp2.getStack();
                                                             }
-                                                            stack2.addSlice(currentSequence.Frames.elementAt(frameIndex).Summary(), inputStack.getProcessor(1));
+                                                            stack2.addSlice(currentSequence.Frames.elementAt(frameIndex).Summary(), inputStack.getProcessor(page)); //*VU 11/30/22 #1004 getProcessor(1)->getProcessor(page)
                                                     }
                                                     imp3 = null;
                                                     try {
@@ -8980,7 +8911,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                                             else {
                                                                 inputStack = imp3.getStack();
                                                             }
-                                                            stack3.addSlice(currentSequence.Frames.elementAt(frameIndex).Summary(), inputStack.getProcessor(1));
+                                                            stack3.addSlice(currentSequence.Frames.elementAt(frameIndex).Summary(), inputStack.getProcessor(page)); //*VU 11/30/22 #1004 getProcessor(1)->getProcessor(page)
                                                     }
                                                     imp4 = null;
                                                     try {
@@ -9007,7 +8938,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                                             else {
                                                                 inputStack = imp4.getStack();
                                                             }
-                                                            stack4.addSlice(currentSequence.Frames.elementAt(frameIndex).Summary(), inputStack.getProcessor(1));
+                                                            stack4.addSlice(currentSequence.Frames.elementAt(frameIndex).Summary(), inputStack.getProcessor(page)); //*VU 11/30/22 #1004 getProcessor(1)->getProcessor(page)
                                                     }
                                             }
                                             // If the sequence is "linescan" data, generate the appropriate
@@ -9030,7 +8961,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                                                 ImageProcessor tmpIP = lsImp.getProcessor().rotateLeft();
                                                                 ImagePlus tmpIMP = new ImagePlus("", tmpIP);
                                                                 ImageStack inputStack = tmpIMP.getStack();
-                                                                lsStack.addSlice("", inputStack.getProcessor(1));
+                                                                lsStack.addSlice("", inputStack.getProcessor(page)); //*VU 02/23/23 #1004 getProcessor(1)->getProcessor(page)
                                                         }
                                                         lsImp1 = null;
                                                         try {
@@ -9048,7 +8979,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                                                 ImageProcessor tmpIP = lsImp1.getProcessor().rotateLeft();
                                                                 ImagePlus tmpIMP = new ImagePlus("1", tmpIP);
                                                                 ImageStack inputStack = tmpIMP.getStack();
-                                                                lsStack1.addSlice("", inputStack.getProcessor(1));
+                                                                lsStack1.addSlice("", inputStack.getProcessor(page)); //*VU 02/23/23 #1004 getProcessor(1)->getProcessor(page)
                                                         }
                                                         lsImp2 = null;
                                                         try {
@@ -9066,7 +8997,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                                                 ImageProcessor tmpIP = lsImp2.getProcessor().rotateLeft();
                                                                 ImagePlus tmpIMP = new ImagePlus("", tmpIP);
                                                                 ImageStack inputStack = tmpIMP.getStack();
-                                                                lsStack2.addSlice("", inputStack.getProcessor(1));
+                                                                lsStack2.addSlice("", inputStack.getProcessor(page)); //*VU 02/23/23 #1004 getProcessor(1)->getProcessor(page)
                                                         }
                                                         lsImp3 = null;
                                                         try {
@@ -9084,7 +9015,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                                                 ImageProcessor tmpIP = lsImp3.getProcessor().rotateLeft();
                                                                 ImagePlus tmpIMP = new ImagePlus("", tmpIP);
                                                                 ImageStack inputStack = tmpIMP.getStack();
-                                                                lsStack3.addSlice("", inputStack.getProcessor(1));
+                                                                lsStack3.addSlice("", inputStack.getProcessor(page)); //*VU 02/23/23 #1004 getProcessor(1)->getProcessor(page)
                                                         }
                                                         lsImp4 = null;
                                                         try {
@@ -9102,7 +9033,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                                                 ImageProcessor tmpIP = lsImp4.getProcessor().rotateLeft();
                                                                 ImagePlus tmpIMP = new ImagePlus("", tmpIP);
                                                                 ImageStack inputStack = tmpIMP.getStack();
-                                                                lsStack4.addSlice("", inputStack.getProcessor(1));
+                                                                lsStack4.addSlice("", inputStack.getProcessor(page)); //*VU 02/23/23 #1004 getProcessor(1)->getProcessor(page)
                                                         }
                                                 }
                                             }
@@ -10694,6 +10625,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                                                             //frameData.ChannelName[channel - 1] = node.getAttributes().getNamedItem("channelName").getNodeValue();
                                                                             frameData.ChannelName[channelIndex] = node.getAttributes().getNamedItem("channelName").getNodeValue();
                                                                             frameData.ChannelNumberName[channelIndex] = "Ch" + channel;
+																			frameData.PageNumber[channelIndex] = Integer.parseInt(node.getAttributes().getNamedItem("page").getNodeValue()); //*VU 11/28/22 #1004
                                                                             String filename = node.getAttributes().getNamedItem("filename").getNodeValue();
                                                                             File image = new File(directory + filename);
                                                                             //if (image.exists()) frameData.Filename[channel - 1] = filename;
@@ -11142,6 +11074,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
             String[] Filename = {null, null, null, null};
             String[] ChannelName = {null, null, null, null};
             String[] ChannelNumberName = {null, null, null, null};
+			int[] PageNumber = {1,1,1,1}; // *VU 11/28/22 #1004
             boolean Channel1Present = false;
             boolean Channel2Present = false;
             boolean Channel3Present = false;
@@ -11226,6 +11159,10 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                 this.ChannelNumberName[1] = masterCopy.ChannelNumberName[1];
                 this.ChannelNumberName[2] = masterCopy.ChannelNumberName[2];
                 this.ChannelNumberName[3] = masterCopy.ChannelNumberName[3];
+				this.PageNumber[0] = masterCopy.PageNumber[0]; // *VU+3 11/28/22 #1004
+				this.PageNumber[1] = masterCopy.PageNumber[1];
+				this.PageNumber[2] = masterCopy.PageNumber[2];
+				this.PageNumber[3] = masterCopy.PageNumber[3];
                 this.Channel1Present = masterCopy.Channel1Present;
                 this.Channel2Present = masterCopy.Channel2Present;
                 this.Channel3Present = masterCopy.Channel3Present;
