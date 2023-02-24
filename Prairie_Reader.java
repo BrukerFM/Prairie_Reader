@@ -1,4 +1,4 @@
-﻿import java.util.Vector;
+import java.util.Vector;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
@@ -355,7 +355,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
 	static Prairie_DataSet data;
 	static Prairie_Sequence currentSequence;
 	static Prairie_Frame currentFrame;
-        String PrairieReaderVersion = "v5.5";
+        String PrairieReaderVersion = "v5.6";
         
         CheckboxMenuItem optionsMenuItemImageStitchingProcessOverlapCopy;
         CheckboxMenuItem optionsMenuItemImageStitchingProcessOverlapBrightest;
@@ -804,6 +804,10 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                 jTextPaneRevisionHistory.setText("BRUKER NANO FM\n" +
                                                 "PRAIRIE_READER REVISION HISTORY\n" +
                                                 "\n" +
+                                                "\n" +
+                                                "Version 5.6\n" +
+                                                "\n" +
+                                                "Added a try/catch block to the imageClosed method to prevent exceptions closing windows in conjunction with the new macro methods exposed in version 5.5. #4451\n" +
                                                 "\n" +
                                                 "Version 5.5\n" +
                                                 "\n" +
@@ -9450,17 +9454,19 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
         public void imageOpened(ImagePlus imp) {}
         
 	public void imageClosed(ImagePlus imp) {
-            int currentSequenceNum = sequenceSelection.getSelectedIndex();
-            if (imp.getTitle().startsWith(WindowI1))
-                data.Sequences.elementAt(currentSequenceNum).SingleChannelWindow1 = null;
-            else if (imp.getTitle().startsWith(WindowI2))
-                data.Sequences.elementAt(currentSequenceNum).SingleChannelWindow2 = null;
-            else if (imp.getTitle().startsWith(WindowI3))
-                data.Sequences.elementAt(currentSequenceNum).SingleChannelWindow3 = null;
-            else if (imp.getTitle().startsWith(WindowI4))
-                data.Sequences.elementAt(currentSequenceNum).SingleChannelWindow4 = null;
-            else
-                data.Sequences.elementAt(currentSequenceNum).Window = null;
+            try {
+                int currentSequenceNum = sequenceSelection.getSelectedIndex();
+                if (imp.getTitle().startsWith(WindowI1))
+                    data.Sequences.elementAt(currentSequenceNum).SingleChannelWindow1 = null;
+                else if (imp.getTitle().startsWith(WindowI2))
+                    data.Sequences.elementAt(currentSequenceNum).SingleChannelWindow2 = null;
+                else if (imp.getTitle().startsWith(WindowI3))
+                    data.Sequences.elementAt(currentSequenceNum).SingleChannelWindow3 = null;
+                else if (imp.getTitle().startsWith(WindowI4))
+                    data.Sequences.elementAt(currentSequenceNum).SingleChannelWindow4 = null;
+                else
+                    data.Sequences.elementAt(currentSequenceNum).Window = null;
+            } catch (Exception ex) {}
         }
         
         public boolean blockImageUpdatedMethod = false;
