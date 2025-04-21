@@ -355,7 +355,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
 	static Prairie_DataSet data;
 	static Prairie_Sequence currentSequence;
 	static Prairie_Frame currentFrame;
-        String PrairieReaderVersion = "v5.8";
+        String PrairieReaderVersion = "v6.0";
         
         CheckboxMenuItem optionsMenuItemImageStitchingProcessOverlapCopy;
         CheckboxMenuItem optionsMenuItemImageStitchingProcessOverlapBrightest;
@@ -729,6 +729,10 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                 jTextPaneRevisionHistory.setText("BRUKER NANO FM\n" +
                                                 "PRAIRIE_READER REVISION HISTORY\n" +
                                                 "\n" +
+                                                "\n" +
+                                                "Version 6.0\n" +
+                                                "\n" +
+                                                "Added support for Prairie View 6.0\n" +
                                                 "\n" +
                                                 "Version 5.8\n" +
                                                 "\n" +
@@ -9776,27 +9780,22 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                 metadata.append("Scan Rotation: " + currentFrame.Rotation + "\n");
             if (!currentSequence.isMosaic)
                 metadata.append("Position: " + currentFrame.Position() + "\n");
-            for (int index = 0; index < 11; index++) {
-                if (currentFrame.LaserPower[index] != null)
-                    metadata.append("Laser " + (index + 1) + " (" + data.LaserNames[index] + ") " + " Power: " + currentFrame.LaserPower[index] + "\n");
+            for (String index : currentFrame.LaserPower.keySet()) {
+                metadata.append("Laser Power (" + data.LaserNames.getOrDefault(index, index) + "): " + currentFrame.LaserPower.get(index) + "\n");
             }
             if ((currentFrame.ActiveMode != ModeSFC) && (currentFrame.ActiveMode != ModeCamera)) {
-                for (int index = 0; index < 8; index++) {
-                    if (currentFrame.PMTGain[index] != null)
-                        metadata.append("PMT " + (index + 1) + " HV: " + currentFrame.PMTGain[index] + "\n");
-            }
-            }
-            for (int index = 0; index < 8; index++) {
-                if (currentFrame.PreAmpGain[index] != null) {
-                    metadata.append("Channel" + (index + 1) + " Preamplifier Gain: " + currentFrame.PreAmpGain[index] + "\n");
-                    if (currentFrame.PreAmpOffset[index] != null) metadata.append("Channel" + (index + 1) + " Preamplifier Offset: " + currentFrame.PreAmpOffset[index] + "\n");
-                    if (currentFrame.PreAmpFilter[index] != null) metadata.append("Channel" + (index + 1) + " Preamplifier Filter: " + currentFrame.PreAmpFilter[index] + "\n");  // omitting for now since filters are currently only stored in the configration file
+                for (String index : currentFrame.PMTGain.keySet()) {
+                    metadata.append("PMT HV (" + data.PMTNames.getOrDefault(index, index) + "): " + currentFrame.PMTGain.get(index) + "\n");
                 }
             }
-            for (int index = 0; index < 4; index++) {
-                if (currentFrame.LaserWavelength[index] > 10) {
-                    metadata.append("Laser " + (index + 1) + " Wavelength: " + currentFrame.LaserWavelength[index] + " at " + currentFrame.TwoPhotonLaserPower[index] + "\n");
-                }
+            for (String index : currentFrame.PreAmpGain.keySet()) {
+                metadata.append("Preamplifier Gain (" + index + "): " + currentFrame.PreAmpGain.get(index) + "\n");
+                if (currentFrame.PreAmpOffset.containsKey(index)) metadata.append("Preamplifier Offset (" + index + "): " + currentFrame.PreAmpOffset.get(index) + "\n");
+                if (currentFrame.PreAmpFilter.containsKey(index)) metadata.append("Preamplifier Filter (" + index + "): " + currentFrame.PreAmpFilter.get(index) + "\n");  // omitting for now since filters are currently only stored in the configration file
+            }
+            if (currentFrame.PreAmpFilter.containsKey("All")) metadata.append("Preamplifier Filter: " + currentFrame.PreAmpFilter.get("All") + "\n");
+            for (String index : currentFrame.LaserWavelength.keySet()) {
+                metadata.append("Laser Wavelength (" + data.TwoPhotonLaserNames.getOrDefault(index, index) + "): " + currentFrame.LaserWavelength.get(index) + " at " + currentFrame.TwoPhotonLaserPower.get(index) + "\n");
             }
             if (data.Notes.length() > 0) metadata.append("Notes: " + data.Notes + "\n");
             if (currentFrame.ActiveMode == ModeSFC) {
@@ -10418,7 +10417,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                                         if (laser.getNodeName().equals("Laser")) {
                                                             String laserName = laser.getAttributes().getNamedItem("name").getNodeValue();
                                                             String index = laser.getAttributes().getNamedItem("index").getNodeValue();
-                                                            data.LaserNames[Integer.parseInt(index)] = laserName;
+                                                            data.LaserNames.put(index, laserName);
                                                         }
                                                     }
                                                 }
@@ -10674,14 +10673,13 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                                 }
                                                 // End of the "sequence"
                                                 if (sequenceData.isZSeries && sequenceData.Frames.size()>= 2) {  //*MJF+11 3/26/15 #2751
-                                                    String[] zPos1Components = sequenceData.Frames.elementAt(0).PositionCurrentZ.split(",");
-                                                    String[] zPos2Components = sequenceData.Frames.elementAt(1).PositionCurrentZ.split(",");
-                                                    int iZDeviceCount = Math.min(zPos1Components.length, zPos2Components.length);
                                                     double zPos1 = 0.0;
+                                                    for (String index : sequenceData.Frames.elementAt(0).PositionCurrentZ.keySet()) {
+                                                        zPos1 += Double.parseDouble(sequenceData.Frames.elementAt(0).PositionCurrentZ.get(index));
+                                                    }
                                                     double zPos2 = 0.0;
-                                                    for (int iZDevice = 0; iZDevice < iZDeviceCount; ++iZDevice) {
-                                                        zPos1 += Double.parseDouble(zPos1Components[iZDevice].trim());
-                                                        zPos2 += Double.parseDouble(zPos2Components[iZDevice].trim());
+                                                    for (String index : sequenceData.Frames.elementAt(1).PositionCurrentZ.keySet()) {
+                                                        zPos2 += Double.parseDouble(sequenceData.Frames.elementAt(1).PositionCurrentZ.get(index));
                                                     }
                                                     sequenceData.ZSeriesStepSize = Math.abs(zPos2 - zPos1);
                                                 }
@@ -10910,7 +10908,9 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
             int versionFourthValue;
             String AcquireDateTime;
             String Notes;
-            String[] LaserNames = {"", "", "", "", "", "", "", "", "", "", "", ""};
+            LinkedHashMap<String, String> LaserNames = new LinkedHashMap<String, String>();
+            LinkedHashMap<String, String> PMTNames = new LinkedHashMap<String, String>();
+            LinkedHashMap<String, String> TwoPhotonLaserNames = new LinkedHashMap<String, String>();
             Boolean isBiDirectionalZSeries = false;
             Boolean isBiDirectionalZSeriesFlag = false;
             Vector<Prairie_Sequence> Sequences;
@@ -10966,11 +10966,11 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
             }
             
             public Boolean isVersion5dot2orGreater() {
-                if (versionFirstValue >= 5) {
+                if (versionFirstValue > 5) {
                     IJ.showMessage("version is 5.2 or greater");
                     return true;
                 }
-                if ((versionFirstValue >=5) && (versionSecondValue >=2)) {
+                if ((versionFirstValue == 5) && (versionSecondValue >= 2)) {
                     IJ.showMessage("version check 5.2 true");
                     return true;
                 }
@@ -11099,16 +11099,16 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
             Double MicronsPerPixelX;
             Double MicronsPerPixelY;
             String Rotation;
-            String[] PMTGain = {null, null, null, null, null, null, null, null};
+            LinkedHashMap<String, String> PMTGain = new LinkedHashMap<String, String>();
             String PositionCurrentX;
             String PositionCurrentY;
-            String PositionCurrentZ;
-            String[] LaserPower = {null, null, null, null, null, null, null, null, null, null, null, null}; //TJK 2/14/2012 Expanded to 12 entries
-            String[] PreAmpGain = {null, null, null, null, null, null, null, null}; //TJK 2/13/2012 Added four entries for eight total
-            String[] PreAmpOffset = {null, null, null, null, null, null, null, null}; //TJK 2/13/2012 Added four entries for eight total
-            String[] PreAmpFilter = {null, null, null, null, null, null, null, null}; //TJK 2/13/2012 Added four entries for eight total
-            int[] LaserWavelength = {0, 0, 0, 0};
-            String[] TwoPhotonLaserPower = {null, null, null, null};
+            LinkedHashMap<String, String> PositionCurrentZ = new LinkedHashMap<String, String>();;
+            LinkedHashMap<String, String> LaserPower = new LinkedHashMap<String, String>();
+            LinkedHashMap<String, String> PreAmpGain = new LinkedHashMap<String, String>();
+            LinkedHashMap<String, String> PreAmpOffset = new LinkedHashMap<String, String>();
+            LinkedHashMap<String, String> PreAmpFilter = new LinkedHashMap<String, String>();
+            LinkedHashMap<String, String> LaserWavelength = new LinkedHashMap<String, String>();
+            LinkedHashMap<String, String> TwoPhotonLaserPower = new LinkedHashMap<String, String>();
             int BitDepth = 12;
             //int ZDevice = 0;  //*MJF 3/26/15 #2751 commented
             String SFCExposureTime = null;
@@ -11187,22 +11187,16 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                 this.MicronsPerPixelX = masterCopy.MicronsPerPixelX;
                 this.MicronsPerPixelY = masterCopy.MicronsPerPixelY;
                 this.Rotation = masterCopy.Rotation;
-                for (int i = 0; i < 8; i++)
-                    this.PMTGain[i] = masterCopy.PMTGain[i];
+                this.PMTGain = new LinkedHashMap<String, String>(masterCopy.PMTGain);
                 this.PositionCurrentX = masterCopy.PositionCurrentX;
                 this.PositionCurrentY = masterCopy.PositionCurrentY;
-                this.PositionCurrentZ = masterCopy.PositionCurrentZ;
-                for (int i = 0; i < 12; i++)
-                    this.LaserPower[i] = masterCopy.LaserPower[i];
-                for (int i = 0; i < 8; i++) {
-                    this.PreAmpGain[i] = masterCopy.PreAmpGain[i];
-                    this.PreAmpOffset[i] = masterCopy.PreAmpOffset[i];
-                    this.PreAmpFilter[i] = masterCopy.PreAmpFilter[i];
-                }
-                for (int i = 0; i < 4; i++) {
-                    this.LaserWavelength[i] = masterCopy.LaserWavelength[i];
-                    this.TwoPhotonLaserPower[i] = masterCopy.TwoPhotonLaserPower[i];
-                }
+                this.PositionCurrentZ = new LinkedHashMap<String, String>(masterCopy.PositionCurrentZ);
+                this.LaserPower = new LinkedHashMap<String, String>(masterCopy.LaserPower);
+                this.PreAmpGain = new LinkedHashMap<String, String>(masterCopy.PreAmpGain);
+                this.PreAmpOffset = new LinkedHashMap<String, String>(masterCopy.PreAmpOffset);
+                this.PreAmpFilter = new LinkedHashMap<String, String>(masterCopy.PreAmpFilter);
+                this.LaserWavelength = new LinkedHashMap<String, String>(masterCopy.LaserWavelength);
+                this.TwoPhotonLaserPower = new LinkedHashMap<String, String>(masterCopy.TwoPhotonLaserPower);
                 this.BitDepth = masterCopy.BitDepth;
                 //this.ZDevice = masterCopy.ZDevice;  //*MJF 3/26/15 #2751 commented
                 this.SFCExposureTime = masterCopy.SFCExposureTime;
@@ -11252,22 +11246,20 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                 SystemTypeFound = true;
                                 SystemType = Integer.parseInt(sValue);
                         } else if (sKey.equals("activeMode")) {
-                            if ((data.versionFirstValue >= 5) && (data.versionSecondValue >= 2)) {
-                                if (sValue.equals("Galvo"))
-                                    ActiveMode = ModeGalvo;
-                                else if (sValue.equals("AOD"))
-                                    ActiveMode = ModeAOD;
-                                else if (sValue.equals("SFC"))
-                                    ActiveMode = ModeSFC;
-                                else if (sValue.equals("Camera"))
-                                    ActiveMode = ModeCamera;
-                                else if (sValue.equals("ResonantGalvo"))
-                                    ActiveMode = ModeResonantGalvo;
-                                else if (sValue.equals("FLIM"))
-                                    ActiveMode = ModeFLIM;
-                                else if (sValue.equals("Spiral"))
-                                    ActiveMode = ModeSpiral;
-                            }
+                            if (sValue.equals("Galvo"))
+                                ActiveMode = ModeGalvo;
+                            else if (sValue.equals("AOD"))
+                                ActiveMode = ModeAOD;
+                            else if (sValue.equals("SFC"))
+                                ActiveMode = ModeSFC;
+                            else if (sValue.equals("Camera"))
+                                ActiveMode = ModeCamera;
+                            else if (sValue.equals("ResonantGalvo"))
+                                ActiveMode = ModeResonantGalvo;
+                            else if (sValue.equals("FLIM"))
+                                ActiveMode = ModeFLIM;
+                            else if (sValue.equals("Spiral"))
+                                ActiveMode = ModeSpiral;
                             else
                                 ActiveMode = Integer.parseInt(sValue);
                         } else if (sKey.equals("rastersPerFrame")) {
@@ -11279,7 +11271,11 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                         } else if (sKey.equals("dwellTime")) {
                                 DwellTime= Double.parseDouble(sValue);
                         } else if (sKey.equals("objectiveLens")) {
-                                ObjectiveLens = sValue;
+                                Node oDescription = oKey.getAttributes().getNamedItem("description");
+                                if (oDescription != null)
+                                    ObjectiveLens = oDescription.getNodeValue();
+                                else
+                                    ObjectiveLens = sValue;
                         } else if (sKey.equals("objectiveLensNA")) {
                                 ObjectiveLensNA= sValue;
                         } else if (sKey.equals("objectiveLensMag")) {
@@ -11321,8 +11317,8 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                         } else if (sKey.equals("rotation")) {
                                 Rotation = sValue + "°";
                         } else if (sKey.startsWith("pmtGain_")) {
-                                int index = Integer.parseInt(sKey.substring(sKey.lastIndexOf("_") + 1));
-                                PMTGain[index] = sValue;
+                                String index = sKey.substring(sKey.lastIndexOf("_") + 1);
+                                PMTGain.put(index, sValue);
                         } else if (sKey.equals("pmtGain")) {
                             NodeList oIndices = oKey.getChildNodes();
                             for(int j = 0; j < oIndices.getLength(); ++j) {
@@ -11330,7 +11326,9 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                 if (oIndex.getNodeName().equals("IndexedValue")) {
                                     String sKey2 = oIndex.getAttributes().getNamedItem("index").getNodeValue();
                                     String sValue2 = oIndex.getAttributes().getNamedItem("value").getNodeValue();
-                                    PMTGain[Integer.parseInt(sKey2)] = sValue2;
+                                    PMTGain.put(sKey2, sValue2);
+                                    Node oDescription = oIndex.getAttributes().getNamedItem("description");
+                                    if (oDescription != null) data.PMTNames.put(sKey2, oDescription.getNodeValue());
                                 }
                             }
                         } else if (sKey.equals("positionCurrent_XAxis")) {
@@ -11338,7 +11336,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                         } else if (sKey.equals("positionCurrent_YAxis")) {
                                 PositionCurrentY = sValue;
                         } else if (sKey.equals("positionCurrent_ZAxis")) {
-                                PositionCurrentZ = sValue;
+                                PositionCurrentZ.put("0", sValue);
                         } else if (sKey.equals("positionCurrent")) {
                             NodeList oIndices = oKey.getChildNodes();
                             for (int j = 0; j < oIndices.getLength(); ++j){
@@ -11374,18 +11372,15 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                             if (oSubindex.getNodeName().equals("SubindexedValue")) {
                                                 String sKey2 = oSubindex.getAttributes().getNamedItem("subindex").getNodeValue();
                                                 String sValue2 = oSubindex.getAttributes().getNamedItem("value").getNodeValue();
-                                                if (Integer.parseInt(sKey2) == 0)
-                                                    PositionCurrentZ = sValue2;
-                                                else
-                                                    PositionCurrentZ += ", " + sValue2;
+                                                PositionCurrentZ.put(sKey2, sValue2);
                                             }
                                         }
                                     }
                                 }
                             }
                         } else if (sKey.startsWith("laserPower_")) {
-                                int index = Integer.parseInt(sKey.substring(sKey.lastIndexOf("_") + 1));
-                                LaserPower[index] = sValue;
+                                String index = sKey.substring(sKey.lastIndexOf("_") + 1);
+                                LaserPower.put(index, sValue);
                         } else if (sKey.equals("laserPower")) {
                             NodeList oIndices = oKey.getChildNodes();
                             for(int j = 0; j < oIndices.getLength(); ++j) {
@@ -11393,24 +11388,24 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                 if (oIndex.getNodeName().equals("IndexedValue")) {
                                     String sKey2 = oIndex.getAttributes().getNamedItem("index").getNodeValue();
                                     String sValue2 = oIndex.getAttributes().getNamedItem("value").getNodeValue();
-                                    String sDescription = oIndex.getAttributes().getNamedItem("description").getNodeValue();
-                                    LaserPower[Integer.parseInt(sKey2)] = sValue2;
-                                    data.LaserNames[Integer.parseInt(sKey2)] = sDescription;
+                                    LaserPower.put(sKey2, sValue2);
+                                    Node oDescription = oIndex.getAttributes().getNamedItem("description");
+                                    if (oDescription != null) data.LaserNames.put(sKey2, oDescription.getNodeValue());
                                 }
                             }
                         } else if (sKey.startsWith("preAmpGain_")) {
-                            int index = Integer.parseInt(sKey.substring(sKey.lastIndexOf("_") + 1));
-                            PreAmpGain[index] = Double.toString(roundDouble(Double.parseDouble(sValue), 2));
+                            String index = sKey.substring(sKey.lastIndexOf("_") + 1);
+                            PreAmpGain.put(index, Double.toString(roundDouble(Double.parseDouble(sValue), 2)));
                         } else if (sKey.startsWith("preAmpOffset_")) {
-                            int index = Integer.parseInt(sKey.substring(sKey.lastIndexOf("_") + 1));
-                            PreAmpOffset[index] = Double.toString(roundDouble(Double.parseDouble(sValue), 2));
+                            String index = sKey.substring(sKey.lastIndexOf("_") + 1);
+                            PreAmpOffset.put(index, Double.toString(roundDouble(Double.parseDouble(sValue), 2)));
                         } else if (sKey.startsWith("preAmpFilterBlock_")) {
-                                int index = Integer.parseInt(sKey.substring(sKey.lastIndexOf("_") + 1));
-                                PreAmpFilter[index] = sValue;
+                                String index = sKey.substring(sKey.lastIndexOf("_") + 1);
+                                PreAmpFilter.put(index, sValue);
                         } else if (sKey.startsWith("preampGain_")) { // Starting with 5.0.32.31 the syntax was changed (preAmp -> preamp) and an additional value was added to indicate which of two possible preamps
-                                int preampNum = Integer.parseInt(sKey.substring(sKey.indexOf("_") + 1, sKey.lastIndexOf("_")));
-                                int index = Integer.parseInt(sKey.substring(sKey.lastIndexOf("_") + 1));
-                                PreAmpGain[(preampNum * 4) + index] = Double.toString(roundDouble(Double.parseDouble(sValue), 2));
+                                String preampNum = sKey.substring(sKey.indexOf("_") + 1, sKey.lastIndexOf("_"));
+                                String index = sKey.substring(sKey.lastIndexOf("_") + 1);
+                                PreAmpGain.put(preampNum + "_" + index, Double.toString(roundDouble(Double.parseDouble(sValue), 2)));
                         } else if (sKey.equals("preampGain")) {
                             NodeList oIndices = oKey.getChildNodes();
                             for (int j = 0; j < oIndices.getLength(); ++j){
@@ -11424,7 +11419,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                             if (oSubindex.getNodeName().equals("SubindexedValue")) {
                                                 String sKey2 = oSubindex.getAttributes().getNamedItem("subindex").getNodeValue();
                                                 String sValue2 = oSubindex.getAttributes().getNamedItem("value").getNodeValue();
-                                                PreAmpGain[Integer.parseInt(sKey2)] = sValue2;
+                                                PreAmpGain.put("0_" + sKey2, sValue2);
                                             }
                                         }
                                     }
@@ -11435,16 +11430,16 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                             if (oSubindex.getNodeName().equals("SubindexedValue")) {
                                                 String sKey2 = oSubindex.getAttributes().getNamedItem("subindex").getNodeValue();
                                                 String sValue2 = oSubindex.getAttributes().getNamedItem("value").getNodeValue();
-                                                PreAmpGain[4 + Integer.parseInt(sKey2)] = sValue2;
+                                                PreAmpGain.put("1_" + sKey2, sValue2);
                                             }
                                         }
                                     }
                                 }
                             } 
                         } else if (sKey.startsWith("preampOffset_")) {
-                                int preampNum = Integer.parseInt(sKey.substring(sKey.indexOf("_") + 1, sKey.lastIndexOf("_")));
-                                int index = Integer.parseInt(sKey.substring(sKey.lastIndexOf("_") + 1));
-                                PreAmpOffset[(preampNum * 4) + index] = Double.toString(roundDouble(Double.parseDouble(sValue), 2));
+                                String preampNum = sKey.substring(sKey.indexOf("_") + 1, sKey.lastIndexOf("_"));
+                                String index = sKey.substring(sKey.lastIndexOf("_") + 1);
+                                PreAmpOffset.put(preampNum + "_" + index, Double.toString(roundDouble(Double.parseDouble(sValue), 2)));
                         } else if (sKey.equals("preampOffset")) {
                             NodeList oIndices = oKey.getChildNodes();
                             for (int j = 0; j < oIndices.getLength(); ++j){
@@ -11458,7 +11453,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                             if (oSubindex.getNodeName().equals("SubindexedValue")) {
                                                 String sKey2 = oSubindex.getAttributes().getNamedItem("subindex").getNodeValue();
                                                 String sValue2 = oSubindex.getAttributes().getNamedItem("value").getNodeValue();
-                                                PreAmpOffset[Integer.parseInt(sKey2)] = sValue2;
+                                                PreAmpOffset.put("0_" + sKey2, sValue2);
                                             }
                                         }
                                     }
@@ -11469,7 +11464,7 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                             if (oSubindex.getNodeName().equals("SubindexedValue")) {
                                                 String sKey2 = oSubindex.getAttributes().getNamedItem("subindex").getNodeValue();
                                                 String sValue2 = oSubindex.getAttributes().getNamedItem("value").getNodeValue();
-                                                PreAmpOffset[4 + Integer.parseInt(sKey2)] = sValue2;
+                                                PreAmpOffset.put("1_" + sKey2, sValue2);
                                             }
                                         }
                                     }
@@ -11477,17 +11472,10 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                             } 
                         } else if (sKey.startsWith("preampFilter")) {
                                 String sDescription = oKey.getAttributes().getNamedItem("description").getNodeValue();
-                                PreAmpFilter[0] = "Filter: " + sValue + " (" + sDescription + ")";
-                                PreAmpFilter[1] = "Filter: " + sValue + " (" + sDescription + ")";
-                                PreAmpFilter[2] = "Filter: " + sValue + " (" + sDescription + ")";
-                                PreAmpFilter[3] = "Filter: " + sValue + " (" + sDescription + ")";
-                                PreAmpFilter[4] = "Filter: " + sValue + " (" + sDescription + ")";
-                                PreAmpFilter[5] = "Filter: " + sValue + " (" + sDescription + ")";
-                                PreAmpFilter[6] = "Filter: " + sValue + " (" + sDescription + ")";
-                                PreAmpFilter[7] = "Filter: " + sValue + " (" + sDescription + ")";
+                                PreAmpFilter.put("All", "Filter: " + sValue + " (" + sDescription + ")");
                         } else if (sKey.startsWith("laserWavelength_")) {
-                                int index = Integer.parseInt(sKey.substring(sKey.lastIndexOf("_") + 1));
-                                LaserWavelength[index] = Integer.parseInt(sValue);
+                                String index = sKey.substring(sKey.lastIndexOf("_") + 1);
+                                LaserWavelength.put(index, sValue);
                         } else if (sKey.equals("laserWavelength")) {
                             NodeList oIndices = oKey.getChildNodes();
                             for(int j = 0; j < oIndices.getLength(); j++) {
@@ -11495,12 +11483,12 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                 if (oIndex.getNodeName().equals("IndexedValue")) {
                                     String sKey2 = oIndex.getAttributes().getNamedItem("index").getNodeValue();
                                     String sValue2 = oIndex.getAttributes().getNamedItem("value").getNodeValue();
-                                    LaserWavelength[Integer.parseInt(sKey2)] = Integer.parseInt(sValue2);
+                                    LaserWavelength.put(sKey2, sValue2);
                                 }
                             }
                         } else if (sKey.startsWith("twophotonLaserPower_")) {
-                                int index = Integer.parseInt(sKey.substring(sKey.lastIndexOf("_") + 1));
-                                TwoPhotonLaserPower[index] = Double.toString(roundDouble(Double.parseDouble(sValue), 1)) + " milliwatts";
+                                String index = sKey.substring(sKey.lastIndexOf("_") + 1);
+                                TwoPhotonLaserPower.put(index, Double.toString(roundDouble(Double.parseDouble(sValue), 1)) + " milliwatts");
                         }
                         else if (sKey.equals("twophotonLaserPower")) {
                             NodeList oIndices = oKey.getChildNodes();
@@ -11509,7 +11497,9 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                                 if (oIndex.getNodeName().equals("IndexedValue")) {
                                     String sKey2 = oIndex.getAttributes().getNamedItem("index").getNodeValue();
                                     String sValue2 = oIndex.getAttributes().getNamedItem("value").getNodeValue();
-                                    TwoPhotonLaserPower[Integer.parseInt(sKey2)] = Double.toString(roundDouble(Double.parseDouble(sValue2), 1)) + " milliwatts";
+                                    TwoPhotonLaserPower.put(sKey2, Double.toString(roundDouble(Double.parseDouble(sValue2), 1)) + " milliwatts");
+                                    Node oDescription = oIndex.getAttributes().getNamedItem("description");
+                                    if (oDescription != null) data.TwoPhotonLaserNames.put(sKey2, oDescription.getNodeValue());
                                 }
                             }
                         }
@@ -11753,12 +11743,24 @@ public class Prairie_Reader extends PlugInFrame implements ActionListener, ItemL
                     return "Unknown";
             }
 
+            public String ZPosition() {
+                String z = null;
+                for (String index : PositionCurrentZ.keySet()) {
+                    if (z == null)
+                        z = PositionCurrentZ.get(index);
+                    else
+                        z += ", " + PositionCurrentZ.get(index);
+                }
+                if (z == null) z = "";
+                return z;
+            }
+
             public String Position() {
-                return "{x = " + PositionCurrentX + ", y = " + PositionCurrentY + ", z = " + PositionCurrentZ + "}";
+                return "{x = " + PositionCurrentX + ", y = " + PositionCurrentY + ", z = " + ZPosition() + "}";
             }
 
             public String Summary() {
-               return "t:" + RelativeTime + " z:" + PositionCurrentZ;
+               return "t:" + RelativeTime + " z:" + ZPosition();
             }
 	}
 }
